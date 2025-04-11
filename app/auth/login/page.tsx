@@ -25,6 +25,7 @@ export default function LoginPage() {
   async function onSubmit(data: any) {
     setErrorMessage("");
     const result = await login(data.email, data.password);
+
     if (result.error) {
       setErrorMessage(result.error);
     }

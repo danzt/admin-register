@@ -74,6 +74,10 @@ export default function RegisterPage() {
                   {errors.cedula.message as string}
                 </p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Debe ser única en el sistema. Si ya estás registrado, ve a
+                iniciar sesión.
+              </p>
             </div>
 
             <div>
@@ -149,6 +153,10 @@ export default function RegisterPage() {
                   {errors.correo.message as string}
                 </p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Debe ser único en el sistema. Si ya estás registrado, ve a
+                iniciar sesión.
+              </p>
             </div>
 
             <div className="flex items-center space-x-2 mb-2">

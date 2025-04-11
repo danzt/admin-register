@@ -4,8 +4,9 @@ import { login, loginSchema } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const result = loginSchema.safeParse(body);
 
+    // Validar datos de entrada
+    const result = loginSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
         { error: result.error.issues[0].message },
@@ -13,13 +14,13 @@ export async function POST(request: Request) {
       );
     }
 
+    // Intentar login
     const loginResult = await login(result.data);
-
     if (loginResult.error) {
       return NextResponse.json({ error: loginResult.error }, { status: 400 });
     }
 
-    // Configurar cookie de autenticación
+    // Crear respuesta exitosa
     const response = NextResponse.json(loginResult);
 
     // Establecer cookie con token de sesión

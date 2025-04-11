@@ -16,9 +16,18 @@ export async function POST(request: Request) {
     const registerResult = await register(result.data);
 
     if (registerResult.error) {
+      let statusCode = 400;
+
+      if (
+        registerResult.error.includes("ya está registrado") ||
+        registerResult.error.includes("already exists")
+      ) {
+        statusCode = 409;
+      }
+
       return NextResponse.json(
         { error: registerResult.error },
-        { status: 400 }
+        { status: statusCode }
       );
     }
 

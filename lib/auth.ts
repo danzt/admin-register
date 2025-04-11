@@ -26,17 +26,88 @@ export async function register(data: z.infer<typeof registerSchema>) {
   }
 
   try {
+    // Primero verificamos si el usuario ya existe en Supabase Auth
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("correo")
+      .eq("correo", data.correo)
+      .single();
+
+    if (existingUser) {
+      return { error: "El correo electrónico ya está registrado" };
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Registrar usuario en Supabase Auth
+    // Intentar registrar el usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.correo,
       password: data.password,
+      options: {
+        // No redirigir a ninguna página después de verificar el correo
+        emailRedirectTo: undefined,
+        // Datos adicionales del usuario
+        data: {
+          cedula: data.cedula,
+          nombres: data.nombres,
+          apellidos: data.apellidos,
+        },
+      },
     });
 
     if (authError) {
       console.error("Error de autenticación:", authError);
-      if (authError.message.includes("email")) {
+
+      // Verificar si es un error de usuario ya existente
+      if (
+        authError.status === 422 &&
+        authError.code === "user_already_exists"
+      ) {
+        // El usuario existe en Auth pero no en la tabla users, intentamos insertar solo en la tabla
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .insert([
+            {
+              cedula: data.cedula,
+              nombres: data.nombres,
+              apellidos: data.apellidos,
+              telefono: data.telefono,
+              direccion: data.direccion,
+              correo: data.correo,
+              fecha_bautizo: data.fechaBautizo || null,
+              whatsapp: data.whatsapp,
+              password_hash: hashedPassword,
+            },
+          ])
+          .select("id, correo");
+
+        console.log("userData", userData);
+        console.log("userError", userError);
+
+        if (userError && (userError.message || userError.code)) {
+          console.error("Error al registrar usuario existente:", userError);
+          if (userError.code === "23505") {
+            if (userError.message.includes("users_cedula_key")) {
+              return { error: "Esta cédula ya está registrada en el sistema" };
+            }
+            if (userError.message.includes("users_correo_key")) {
+              return {
+                error:
+                  "Este correo electrónico ya está registrado en el sistema",
+              };
+            }
+          }
+          return { error: "Error al registrar el usuario" };
+        }
+
+        // Si llegamos aquí, significa que añadimos correctamente el usuario a la tabla users
+        return {
+          success: true,
+          user: userData?.[0] || { id: "auth-only", correo: data.correo },
+        };
+      }
+
+      if (authError.message && authError.message.includes("email")) {
         return { error: "El correo electrónico ya está registrado" };
       }
       return { error: "Error en la autenticación" };
@@ -60,23 +131,26 @@ export async function register(data: z.infer<typeof registerSchema>) {
       ])
       .select("id, correo");
 
-    if (userError) {
+    // Solo considerar el error si realmente hay un mensaje o código de error
+    if (userError && (userError.message || userError.code)) {
       console.error("Error al registrar usuario:", userError);
       if (userError.code === "23505") {
         if (userError.message.includes("users_cedula_key")) {
-          return { error: "Cédula already exists" };
+          return { error: "Esta cédula ya está registrada en el sistema" };
         }
         if (userError.message.includes("users_correo_key")) {
-          return { error: "Email already exists" };
+          return {
+            error: "Este correo electrónico ya está registrado en el sistema",
+          };
         }
       }
-      return { error: "An error occurred during registration" };
+      return { error: "Error al registrar el usuario" };
     }
 
-    return { success: true, user: userData[0] };
+    return { success: true, user: userData?.[0] || authData.user };
   } catch (error: any) {
     console.error("Registration error:", error);
-    return { error: "An error occurred during registration" };
+    return { error: "Ocurrió un error durante el registro" };
   }
 }
 
@@ -88,15 +162,78 @@ export async function login({ email, password }: z.infer<typeof loginSchema>) {
     });
 
     if (error) {
+      // Si el error es de verificación de correo, proporcionar un mensaje más claro
+      if (error.message.includes("Email not confirmed")) {
+        return {
+          error:
+            "El correo electrónico no ha sido confirmado. Por favor, revisa tu bandeja de entrada.",
+        };
+      }
       return { error: "Credenciales inválidas" };
     }
 
     // Obtener información adicional del usuario
-    const { data: userData } = await supabase
+    const { data: userData, error: userDataError } = await supabase
       .from("users")
       .select("*")
       .eq("correo", email)
       .single();
+
+    // Si hay un error al obtener datos del usuario pero la autenticación fue exitosa,
+    // aún podemos retornar datos básicos del usuario
+    if (userDataError && !userData) {
+      console.error("Error al obtener datos del usuario:", userDataError);
+
+      // Si es un error de no encontrado, es posible que el usuario exista en Auth pero no en la tabla users
+      if (userDataError.code === "PGRST116") {
+        // Intentar crear el registro del usuario en la tabla users
+        const { error: insertError } = await supabase.from("users").insert([
+          {
+            cedula: data.user?.user_metadata?.cedula || "Sin cédula",
+            nombres:
+              data.user?.user_metadata?.nombres ||
+              data.user?.email?.split("@")[0] ||
+              "Usuario",
+            apellidos: data.user?.user_metadata?.apellidos || "",
+            telefono: "Sin teléfono",
+            direccion: "Sin dirección",
+            correo: email,
+            whatsapp: false,
+            password_hash: "cuenta migrada",
+          },
+        ]);
+
+        if (insertError) {
+          console.error("Error al crear el registro de usuario:", insertError);
+          return { error: "No se pudo recuperar la información del usuario" };
+        }
+
+        console.log("data", data);
+        // Retornar datos básicos del usuario de Auth
+        return {
+          success: true,
+          user: {
+            id: data.user?.id || "",
+            correo: email,
+            cedula: data.user?.user_metadata?.cedula || "Sin cédula",
+            nombres:
+              data.user?.user_metadata?.nombres ||
+              data.user?.email?.split("@")[0] ||
+              "Usuario",
+            apellidos: data.user?.user_metadata?.apellidos || "",
+            telefono: "Sin teléfono",
+            direccion: "Sin dirección",
+            whatsapp: false,
+            session: data.session,
+          },
+        };
+      }
+
+      return { error: "No se pudo recuperar la información del usuario" };
+    }
+
+    console.log("userData", userData);
+    console.log("data", data);
 
     return {
       success: true,

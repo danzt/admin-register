@@ -1,14 +1,18 @@
-export default function Home() {
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/auth/login");
+  }, [router]);
+
   return (
-    <div
-      style={{
-        maxWidth: 1280,
-        margin: '0 auto',
-        padding: '2rem',
-        textAlign: 'center',
-      }}
-    >
-      Start prompting.
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="text-xl">Redirigiendo...</p>
     </div>
   );
 }

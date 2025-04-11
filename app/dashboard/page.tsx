@@ -64,6 +64,12 @@ export default function DashboardPage() {
               >
                 Importar Usuarios
               </Button>
+              <Button
+                onClick={() => router.push("/dashboard/usuarios")}
+                variant="default"
+              >
+                Gestión de Usuarios
+              </Button>
               <Button variant="outline" disabled>
                 Módulo de Reportes (Próximamente)
               </Button>

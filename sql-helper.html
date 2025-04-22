@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SQL para crear tabla users</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    h1 {
+      color: #333;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    button {
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .instructions {
+      background-color: #e9f7ef;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .instructions ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>SQL para crear la tabla "users" en Supabase</h1>
+  
+  <div class="instructions">
+    <h2>Instrucciones:</h2>
+    <ol>
+      <li>Copia el siguiente código SQL haciendo clic en el botón "Copiar SQL"</li>
+      <li>Abre el <a href="https://app.supabase.com" target="_blank">Dashboard de Supabase</a></li>
+      <li>Selecciona tu proyecto</li>
+      <li>Ve a SQL Editor en el menú lateral</li>
+      <li>Haz clic en "New Query"</li>
+      <li>Pega el código SQL que copiaste</li>
+      <li>Haz clic en "Run" para ejecutar el código</li>
+    </ol>
+  </div>
+
+  <button onclick="copyToClipboard()">Copiar SQL</button>
+  
+  <h3>Código SQL:</h3>
+  <pre id="sqlCode">-- Habilitar extensión pgcrypto para hash de contraseñas
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Crear tabla de usuarios
+CREATE TABLE IF NOT EXISTS public.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cedula TEXT NOT NULL UNIQUE,
+  nombres TEXT NOT NULL,
+  apellidos TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  direccion TEXT NOT NULL,
+  correo TEXT NOT NULL UNIQUE,
+  fecha_bautizo TIMESTAMP,
+  whatsapp BOOLEAN DEFAULT FALSE,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Configurar políticas de Row Level Security (RLS)
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+-- Política para permitir lectura solo a usuarios autenticados sobre sus propios datos
+CREATE POLICY "Usuarios pueden ver su propia información" ON public.users
+  FOR SELECT USING (auth.uid()::text = id::text OR auth.jwt() -&gt;&gt; 'role' = 'service_role');
+
+-- Política para permitir inserción desde la API de servicio
+CREATE POLICY "Servicio puede insertar usuarios" ON public.users
+  FOR INSERT WITH CHECK (auth.jwt() -&gt;&gt; 'role' = 'service_role' OR auth.uid() IS NOT NULL);
+
+-- Política para permitir actualización solo a usuarios autenticados sobre sus propios datos
+CREATE POLICY "Usuarios pueden actualizar su propia información" ON public.users
+  FOR UPDATE USING (auth.uid()::text = id::text OR auth.jwt() -&gt;&gt; 'role' = 'service_role');
+
+-- Dar permisos anónimos para inserción (necesario para registro)
+GRANT INSERT ON public.users TO anon; </pre>
+
+  <script>
+    function copyToClipboard() {
+      const sqlCode = document.getElementById('sqlCode').innerText;
+      navigator.clipboard.writeText(sqlCode).then(function() {
+        alert('SQL copiado al portapapeles!');
+      }, function() {
+        alert('Error al copiar');
+      });
+    }
+  </script>
+</body>
+</html>

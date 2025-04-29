@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginPage() {
-  const { login, loading } = useAuth();
+  const { login } = useAuth();
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -23,12 +24,14 @@ export default function LoginPage() {
   });
 
   async function onSubmit(data: any) {
+    setIsSubmitting(true);
     setErrorMessage("");
     const result = await login(data.email, data.password);
 
     if (result.error) {
       setErrorMessage(result.error);
     }
+    setIsSubmitting(false);
   }
 
   return (
@@ -77,8 +80,8 @@ export default function LoginPage() {
           )}
 
           <div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
           </div>
         </form>

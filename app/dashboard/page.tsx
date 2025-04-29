@@ -1,132 +1,222 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Calendar,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
+import { PageContainer } from "@/app/components/ui/page-container";
 
-export default function DashboardPage() {
-  const { user, loading, logout } = useAuth();
-  const router = useRouter();
-  const [localLoading, setLocalLoading] = useState(true);
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
-  // Usar un efecto con un temporizador para evitar que la carga se quede atascada
+interface UserData {
+  name: string;
+  usuarios: number;
+}
+
+interface BaptismData {
+  name: string;
+  value: number;
+}
+
+const DashboardPage = () => {
+  const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    inactiveUsers: 0,
+    newUsersThisMonth: 0,
+  });
+
+  const [userData, setUserData] = useState<UserData[]>([]);
+  const [baptismData, setBaptismData] = useState<BaptismData[]>([]);
+
   useEffect(() => {
-    // Solo aplicamos el timer cuando el componente se monta inicialmente
-    const timer = setTimeout(() => {
-      setLocalLoading(false);
-    }, 2000); // Después de 2 segundos, forzamos que no se muestre "cargando"
+    setMounted(true);
+    // Simular datos para el ejemplo
+    setStats({
+      totalUsers: 150,
+      activeUsers: 120,
+      inactiveUsers: 30,
+      newUsersThisMonth: 15,
+    });
 
-    return () => clearTimeout(timer);
+    setUserData([
+      { name: "Ene", usuarios: 20 },
+      { name: "Feb", usuarios: 25 },
+      { name: "Mar", usuarios: 30 },
+      { name: "Abr", usuarios: 35 },
+      { name: "May", usuarios: 40 },
+      { name: "Jun", usuarios: 45 },
+    ]);
+
+    setBaptismData([
+      { name: "Bautizados", value: 100 },
+      { name: "No Bautizados", value: 50 },
+    ]);
   }, []);
 
-  // Si todavía está cargando y no ha pasado el tiempo máximo, mostrar indicador
-  if (loading && localLoading) {
+  if (!mounted) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-xl">Cargando...</p>
-      </div>
+      <PageContainer>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-gray-500">Cargando...</p>
+          </div>
+        </div>
+      </PageContainer>
     );
   }
 
-  // Si no hay usuario después de cargar, redirigir al login
-  if (!user) {
-    router.push("/auth/login");
-    return null;
-  }
+  const userName = user?.nombres ? `${user.nombres} ${user.apellidos || ""}` : "Usuario";
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
-      <div className="container mx-auto px-4">
-        <div className="bg-white shadow-md rounded-lg p-6 max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">
-              Bienvenido,{" "}
-              {user?.nombres || user?.correo?.split("@")[0] || "Usuario"}
-            </h1>
-            <Button onClick={logout} variant="outline">
-              Cerrar sesión
-            </Button>
-          </div>
+    <PageContainer>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-gray-500">
+            Bienvenido, {userName}
+          </p>
+        </div>
 
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Módulos disponibles</h2>
-            <div className="flex flex-wrap gap-4">
-              <Button
-                onClick={() => router.push("/dashboard/tablas")}
-                variant="default"
-              >
-                Módulo de Tablas
-              </Button>
-              <Button
-                onClick={() => router.push("/dashboard/importar")}
-                variant="default"
-              >
-                Importar Usuarios
-              </Button>
-              <Button
-                onClick={() => router.push("/dashboard/usuarios")}
-                variant="default"
-              >
-                Gestión de Usuarios
-              </Button>
-              <Button variant="outline" disabled>
-                Módulo de Reportes (Próximamente)
-              </Button>
-            </div>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                +{stats.newUsersThisMonth} este mes
+              </p>
+            </CardContent>
+          </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Datos personales</h2>
-              <div className="space-y-3">
-                <p>
-                  <span className="font-medium">Cédula:</span>{" "}
-                  {user?.cedula || "No disponible"}
-                </p>
-                <p>
-                  <span className="font-medium">Nombre completo:</span>{" "}
-                  {user?.nombres || "No disponible"} {user?.apellidos || ""}
-                </p>
-                <p>
-                  <span className="font-medium">Correo:</span>{" "}
-                  {user?.correo || "No disponible"}
-                </p>
-                <p>
-                  <span className="font-medium">Teléfono:</span>{" "}
-                  {user?.telefono || "No disponible"}
-                </p>
-                <p>
-                  <span className="font-medium">Dirección:</span>{" "}
-                  {user?.direccion || "No disponible"}
-                </p>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Usuarios Activos</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                <ArrowUp className="inline h-3 w-3 text-green-500" /> +12% este mes
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Usuarios Inactivos
+              </CardTitle>
+              <UserX className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.inactiveUsers}</div>
+              <p className="text-xs text-muted-foreground">
+                <ArrowDown className="inline h-3 w-3 text-red-500" /> -5% este mes
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Nuevos Usuarios
+              </CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.newUsersThisMonth}</div>
+              <p className="text-xs text-muted-foreground">
+                En el último mes
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Usuarios por Mes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={userData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="usuarios" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                Información adicional
-              </h2>
-              <div className="space-y-3">
-                <p>
-                  <span className="font-medium">Estado de bautizo:</span>{" "}
-                  {user?.fecha_bautizo ? "Bautizado" : "No bautizado"}
-                </p>
-                {user?.fecha_bautizo && (
-                  <p>
-                    <span className="font-medium">Fecha de bautizo:</span>{" "}
-                    {new Date(user?.fecha_bautizo || "").toLocaleDateString()}
-                  </p>
-                )}
-                <p>
-                  <span className="font-medium">WhatsApp:</span>{" "}
-                  {user?.whatsapp ? "Sí" : "No"}
-                </p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Estado de Bautismo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={baptismData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                    >
+                      {baptismData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
-}
+};
+
+export default DashboardPage;

@@ -31,6 +31,17 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PageContainer } from "@/app/components/ui/page-container";
 
 type User = {
   id: string;
@@ -55,7 +66,7 @@ export default function UsuariosPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -105,13 +116,11 @@ export default function UsuariosPage() {
   };
 
   const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setIsDialogOpen(true);
+    router.push(`/dashboard/usuarios/${user.id}`);
   };
 
   const handleAddUser = () => {
-    setSelectedUser(null);
-    setIsDialogOpen(true);
+    router.push("/dashboard/usuarios/new");
   };
 
   const handleUserSaved = () => {
@@ -134,6 +143,10 @@ export default function UsuariosPage() {
     return date.toLocaleDateString();
   };
 
+  const getInitials = (nombres: string, apellidos: string) => {
+    return `${nombres?.[0] || ""}${apellidos?.[0] || ""}`.toUpperCase();
+  };
+
   if (loading || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -144,170 +157,190 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
-      <div className="flex-grow p-4 overflow-auto">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-2xl font-bold">
-                  Gestión de Usuarios
-                </CardTitle>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                  <Input
-                    type="search"
-                    placeholder="Buscar usuarios..."
-                    className="pl-8 w-full sm:w-[250px]"
-                    value={searchTerm}
-                    onChange={handleSearch}
-                  />
+    <div className="min-h-screen flex flex-col bg-gray-100">
+      <PageContainer>
+        <div className="flex-grow px-2 sm:px-4 md:px-8 pt-6 pb-4 overflow-auto w-full">
+          <div className="mb-2 ml-1">
+            <Breadcrumb
+              items={[
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "Usuarios", href: "/dashboard/usuarios" },
+              ]}
+            />
+          </div>
+          <Card className="h-full flex flex-col mt-4 shadow-xl border-0">
+            <CardHeader className="pb-3 bg-white rounded-t-lg sticky top-0 z-10 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-primary">
+                    Gestión de Usuarios
+                  </CardTitle>
                 </div>
-                <Button onClick={handleAddUser}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Usuario
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="search"
+                      placeholder="Buscar usuarios..."
+                      className="pl-8 w-full sm:w-[250px] rounded-lg border-gray-300"
+                      value={searchTerm}
+                      onChange={handleSearch}
+                    />
+                  </div>
+                  <Button onClick={handleAddUser} className="bg-primary text-white hover:bg-primary/90">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo Usuario
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow overflow-hidden pt-2">
-            <div className="h-full flex flex-col">
-              <div className="flex-grow overflow-auto border rounded-md">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-white">
-                    <TableRow>
-                      <TableHead className="w-[100px]">Cédula</TableHead>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Correo</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Teléfono
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell">
-                        Bautizo
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell">
-                        WhatsApp
-                      </TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentUsers.length > 0 ? (
-                      currentUsers.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.cedula}
-                          </TableCell>
-                          <TableCell>{`${user.nombres} ${user.apellidos}`}</TableCell>
-                          <TableCell>
-                            {user.correo ? (
-                              <div className="flex items-center space-x-1">
-                                <Mail className="h-4 w-4 text-gray-500" />
-                                <span className="truncate max-w-[150px]">
-                                  {user.correo}
-                                </span>
+            </CardHeader>
+            <CardContent className="flex-grow overflow-hidden pt-2">
+              <div className="h-full flex flex-col">
+                <div className="flex-grow overflow-auto border rounded-lg bg-white">
+                  <Table className="min-w-full">
+                    <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
+                      <TableRow>
+                        <TableHead className="w-[60px]"> </TableHead>
+                        <TableHead className="w-[100px]">Cédula</TableHead>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Correo</TableHead>
+                        <TableHead className="hidden md:table-cell">Teléfono</TableHead>
+                        <TableHead className="hidden lg:table-cell">Bautizo</TableHead>
+                        <TableHead className="hidden lg:table-cell">WhatsApp</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentUsers.length > 0 ? (
+                        currentUsers.map((user) => (
+                          <TableRow key={user.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center justify-center">
+                                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                                  {getInitials(user.nombres, user.apellidos)}
+                                </div>
                               </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">
-                                No disponible
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {user.telefono || (
-                              <span className="text-gray-400 text-sm">
-                                No disponible
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {formatDate(user.fecha_bautizo)}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {user.whatsapp ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-gray-300" />
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <span className="sr-only">Abrir menú</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleEditUser(user)}
-                                >
-                                  <UserCog className="mr-2 h-4 w-4" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            </TableCell>
+                            <TableCell>{user.cedula}</TableCell>
+                            <TableCell>{`${user.nombres} ${user.apellidos}`}</TableCell>
+                            <TableCell>
+                              {user.correo ? (
+                                <div className="flex items-center space-x-1">
+                                  <Mail className="h-4 w-4 text-gray-500" />
+                                  <span className="truncate max-w-[150px]">
+                                    {user.correo}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 text-sm">No disponible</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">
+                              {user.telefono ? (
+                                <span>{user.telefono}</span>
+                              ) : (
+                                <span className="text-gray-400 text-sm">No disponible</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {user.fecha_bautizo ? (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  {formatDate(user.fecha_bautizo)}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-gray-100 text-gray-400 border-gray-200">No</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              {user.whatsapp ? (
+                                <Badge className="bg-green-100 text-green-700 border-green-200">Sí</Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-gray-100 text-gray-400 border-gray-200">No</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => handleEditUser(user)}
+                                    >
+                                      <span className="sr-only">Editar</span>
+                                      <UserCog className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Editar usuario</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={8} className="h-24 text-center text-gray-400">
+                            No se encontraron usuarios.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          No se encontraron usuarios.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {filteredUsers.length > 0 && (
-                <div className="py-4 flex items-center justify-between border-t mt-2">
-                  <div className="text-sm text-gray-600">
-                    Mostrando {startIndex + 1} a {endIndex} de{" "}
-                    {filteredUsers.length} usuarios
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">Mostrar</span>
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={(value) => setItemsPerPage(Number(value))}
+                    >
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-sm text-gray-600">registros</span>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
                     >
                       Anterior
                     </Button>
+                    <span className="text-sm text-gray-600">
+                      Página {currentPage} de {totalPages}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
                     >
                       Siguiente
                     </Button>
                   </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <UserDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        user={selectedUser}
-        onSave={handleUserSaved}
-      />
+        <UserDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          user={selectedUser}
+          onSave={handleUserSaved}
+        />
+      </PageContainer>
     </div>
   );
 }

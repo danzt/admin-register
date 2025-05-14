@@ -22,7 +22,7 @@ type UserFormData = {
   correo: string;
   fecha_bautizo: string;
   whatsapp: boolean;
-  password: string;
+  // password: string;
 };
 
 export default function NewUserPage() {
@@ -39,7 +39,7 @@ export default function NewUserPage() {
     correo: "",
     fecha_bautizo: "",
     whatsapp: false,
-    password: "",
+    // password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,7 +195,7 @@ export default function NewUserPage() {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
@@ -205,7 +205,7 @@ export default function NewUserPage() {
                   onChange={handleChange}
                   required
                 />
-              </div>
+              </div> */}
 
               <div className="flex items-center space-x-2">
                 <Switch

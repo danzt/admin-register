@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { useToast } from "./use-toast";
 
+export type Role = 'admin' | 'staff' | 'usuario';
+
 type User = {
   id: string;
   correo: string;
@@ -13,6 +15,7 @@ type User = {
   direccion: string;
   whatsapp: boolean;
   fecha_bautizo?: string;
+  role: Role;
 } | null;
 
 type AuthContextType = {
@@ -26,6 +29,8 @@ type AuthContextType = {
   logout: () => Promise<void>;
   register: (formData: any) => Promise<{ error?: string }>;
   checkSession: () => Promise<void>;
+  hasRole: (roles: Role | Role[]) => boolean;
+  hasPermission: (permission: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,6 +40,8 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   register: async () => ({}),
   checkSession: async () => {},
+  hasRole: () => false,
+  hasPermission: async () => false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -53,8 +60,55 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return null;
   });
   const [loading, setLoading] = useState(true);
+  const [permissionsCache, setPermissionsCache] = useState<{[key: string]: boolean}>({});
   const router = useRouter();
   const { toast } = useToast();
+
+  // Verificar si el usuario tiene un rol específico
+  const hasRole = (roles: Role | Role[]): boolean => {
+    if (!user) return false;
+    
+    if (Array.isArray(roles)) {
+      return roles.includes(user.role);
+    }
+    
+    return user.role === roles;
+  };
+
+  // Verificar si el usuario tiene un permiso específico
+  const hasPermission = async (permission: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    // Si el usuario es admin, tiene todos los permisos
+    if (user.role === 'admin') return true;
+    
+    // Verificar en el cache primero
+    if (permissionsCache.hasOwnProperty(permission)) {
+      return permissionsCache[permission];
+    }
+    
+    try {
+      // Obtener los permisos del rol del usuario
+      const { data, error } = await supabase
+        .from('role_permissions')
+        .select('permissions(name)')
+        .eq('role', user.role)
+        .eq('permissions.name', permission);
+      
+      const hasAccess = !error && data && data.length > 0;
+      
+      // Guardar en cache
+      setPermissionsCache(prev => ({
+        ...prev,
+        [permission]: hasAccess
+      }));
+      
+      return hasAccess;
+    } catch (error) {
+      console.error('Error verificando permisos:', error);
+      return false;
+    }
+  };
 
   // Función para verificar la sesión actual
   const checkSession = async () => {
@@ -98,6 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         telefono: "Sin teléfono",
         direccion: "Sin dirección",
         whatsapp: false,
+        role: 'usuario',
       });
     } catch (error) {
       console.error("Error verificando sesión:", error);
@@ -311,7 +366,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, register, checkSession }}
+      value={{ 
+        user, 
+        loading, 
+        login, 
+        logout, 
+        register, 
+        checkSession,
+        hasRole,
+        hasPermission
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { login, loginSchema } from "@/lib/auth";
+import { Role } from "@/hooks/use-auth";
 
 export async function POST(request: Request) {
   try {
@@ -36,6 +37,22 @@ export async function POST(request: Request) {
           path: "/",
         }
       );
+      
+      // Establecer cookie con el rol del usuario (no httpOnly para que sea accesible por JS)
+      if (loginResult.user?.role) {
+        const userRole: Role = loginResult.user.role;
+        response.cookies.set(
+          "user-role",
+          userRole,
+          {
+            httpOnly: false, // Permite acceso desde JS
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24 * 7, // 1 semana
+            path: "/",
+          }
+        );
+      }
     }
 
     return response;

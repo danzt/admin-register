@@ -22,6 +22,7 @@ import {
   Calendar,
   ArrowUp,
   ArrowDown,
+  Loader2,
 } from "lucide-react";
 import { PageContainer } from "@/app/components/ui/page-container";
 
@@ -39,7 +40,7 @@ interface BaptismData {
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -51,38 +52,44 @@ const DashboardPage = () => {
   const [baptismData, setBaptismData] = useState<BaptismData[]>([]);
 
   useEffect(() => {
-    setMounted(true);
-    // Simular datos para el ejemplo
-    setStats({
-      totalUsers: 150,
-      activeUsers: 120,
-      inactiveUsers: 30,
-      newUsersThisMonth: 15,
-    });
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [summaryRes, usersByMonthRes, baptismStatusRes] = await Promise.all([
+          fetch("/api/admin/stats/summary"),
+          fetch("/api/admin/stats/users-by-month"),
+          fetch("/api/admin/stats/baptism-status"),
+        ]);
 
-    setUserData([
-      { name: "Ene", usuarios: 20 },
-      { name: "Feb", usuarios: 25 },
-      { name: "Mar", usuarios: 30 },
-      { name: "Abr", usuarios: 35 },
-      { name: "May", usuarios: 40 },
-      { name: "Jun", usuarios: 45 },
-    ]);
+        if (!summaryRes.ok || !usersByMonthRes.ok || !baptismStatusRes.ok) {
+          console.error("Error fetching dashboard data");
+          throw new Error("Failed to load dashboard data");
+        }
 
-    setBaptismData([
-      { name: "Bautizados", value: 100 },
-      { name: "No Bautizados", value: 50 },
-    ]);
+        const summaryData = await summaryRes.json();
+        const usersByMonthData = await usersByMonthRes.json();
+        const baptismStatusData = await baptismStatusRes.json();
+
+        setStats(summaryData);
+        setUserData(usersByMonthData);
+        setBaptismData(baptismStatusData);
+
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  if (!mounted) {
+  if (isLoading) {
     return (
       <PageContainer>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-gray-500">Cargando...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-xl text-gray-600">Cargando datos del dashboard...</p>
         </div>
       </PageContainer>
     );

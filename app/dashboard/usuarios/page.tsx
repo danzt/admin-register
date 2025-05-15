@@ -30,6 +30,7 @@ import {
   Mail,
   CheckCircle2,
   XCircle,
+  Trash2,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import {
@@ -42,6 +43,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageContainer } from "@/app/components/ui/page-container";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle, AlertCircle } from "lucide-react";
 
 type User = {
   id: string;
@@ -59,6 +71,7 @@ type User = {
 export default function UsuariosPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +80,8 @@ export default function UsuariosPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; nombre: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -117,6 +132,46 @@ export default function UsuariosPage() {
 
   const handleEditUser = (user: User) => {
     router.push(`/dashboard/usuarios/${user.id}`);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error al eliminar el usuario");
+      }
+      setIsDeleteDialogOpen(false);
+      
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado exitosamente.",
+        variant: "default",
+        duration: 5000,
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+      
+      fetchUsers();
+    } catch (error) {
+      console.error("Error al eliminar usuario:", error);
+      
+      toast({
+        title: "Error",
+        description: (error as Error).message || "Ocurrió un error al eliminar el usuario.",
+        variant: "destructive",
+        duration: 7000,
+      });
+    }
+  };
+
+  const openDeleteConfirmation = (user: User) => {
+    setUserToDelete({
+      id: user.id,
+      nombre: `${user.nombres} ${user.apellidos}`,
+    });
+    setIsDeleteDialogOpen(true);
   };
 
   const handleAddUser = () => {
@@ -259,22 +314,24 @@ export default function UsuariosPage() {
                               )}
                             </TableCell>
                             <TableCell className="text-right">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
-                                      onClick={() => handleEditUser(user)}
-                                    >
-                                      <span className="sr-only">Editar</span>
-                                      <UserCog className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Editar usuario</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Abrir menú</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                                    <UserCog className="mr-2 h-4 w-4" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openDeleteConfirmation(user)} className="text-red-600 hover:text-red-600 hover:bg-red-50">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))
@@ -341,6 +398,36 @@ export default function UsuariosPage() {
           onSave={handleUserSaved}
         />
       </PageContainer>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Confirmar eliminación</DialogTitle>
+            <DialogDescription className="text-gray-500 pt-2">
+              {userToDelete && (
+                <>
+                  ¿Estás seguro de que quieres eliminar a <span className="font-semibold">{userToDelete.nombre}</span>?
+                  <p className="mt-2">Esta acción no se puede deshacer.</p>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 sm:justify-between gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => userToDelete && handleDeleteUser(userToDelete.id)}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Toaster } from "@/components/ui/toaster";
 
 const navigation = [
   {
@@ -218,6 +219,9 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+      
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 } 

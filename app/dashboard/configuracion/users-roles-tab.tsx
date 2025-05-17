@@ -172,6 +172,14 @@ export function UsersRolesTab() {
         throw new Error("Error al actualizar los roles");
       }
 
+      // Recargar la lista de usuarios después de la actualización
+      const refreshResponse = await fetch("/api/admin/users");
+      if (refreshResponse.ok) {
+        const { users: refreshedUsers } = await refreshResponse.json();
+        setUsers(refreshedUsers);
+        setFilteredUsers(refreshedUsers);
+      }
+
       setChangedUsers(new Set()); // Limpiar los cambios
 
       toast({

@@ -3,6 +3,24 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { Role } from "@/hooks/use-auth";
 
+// Crear un cliente de Supabase con la clave de servicio
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_KEY || "",
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// Crear un cliente normal de Supabase para verificación de sesión
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+);
+
 export async function PUT(req: NextRequest) {
   try {
     const { users } = await req.json();
@@ -15,38 +33,42 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Obtener el token de autenticación de las cookies
+    // Verificar la sesión del usuario
     const cookieStore = cookies();
     const supabaseAuthToken = cookieStore.get("supabase-auth")?.value;
-    const userRole = cookieStore.get("user-role")?.value;
-    
+
     if (!supabaseAuthToken) {
       return NextResponse.json(
-        { error: "No autorizado - No se encontró token de sesión" },
+        { error: "No autorizado - Sesión no encontrada" },
         { status: 401 }
       );
     }
 
-    if (userRole !== "admin") {
+    // Configurar el cliente con el token de la sesión
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { error: "Sesión inválida o expirada" },
+        { status: 401 }
+      );
+    }
+
+    // Obtener el usuario y verificar si es admin
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('correo', session.user.email)
+      .single();
+
+    if (userError || !userData || userData.role !== 'admin') {
       return NextResponse.json(
         { error: "Se requieren permisos de administrador para esta acción" },
         { status: 403 }
       );
     }
 
-    // Crear cliente de Supabase con el token de autenticación
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${supabaseAuthToken}`
-        }
-      }
-    });
-
-    // Ejecutar las actualizaciones
+    // Ejecutar las actualizaciones usando el cliente admin
     const results = [];
     for (const user of users) {
       const { id, role } = user;
@@ -63,12 +85,13 @@ export async function PUT(req: NextRequest) {
       }
 
       // Actualizar rol del usuario
-      const { error: updateError } = await supabaseClient
+      const { error: updateError } = await supabaseAdmin
         .from("users")
         .update({ role })
         .eq("id", id);
 
       if (updateError) {
+        console.error("Error actualizando rol:", updateError);
         results.push({ 
           id, 
           success: false, 

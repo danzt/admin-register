@@ -106,8 +106,8 @@ export default function DashboardLayout({
         {/* Sidebar header */}
         <div className="flex h-16 items-center justify-between px-4 border-b">
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <span className={cn("text-xl font-bold text-primary transition-all", sidebarExpanded ? "block" : "hidden")}>AdminPanel</span>
-            <span className={cn("text-xl font-bold text-primary transition-all", !sidebarExpanded ? "block" : "hidden")}>AP</span>
+            <span className={cn("text-xl font-bold text-primary transition-all", sidebarExpanded ? "block" : "hidden")}>AdministraSion</span>
+            <span className={cn("text-xl font-bold text-primary transition-all", !sidebarExpanded ? "block" : "hidden")}>SA</span>
           </Link>
           {/* Collapse/Expand button (desktop) */}
           <Button

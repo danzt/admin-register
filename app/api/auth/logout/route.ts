@@ -11,7 +11,7 @@ export async function POST() {
 
     // Eliminar la cookie de autenticación
     response.cookies.delete("supabase-auth");
-    
+
     // Eliminar la cookie del rol
     response.cookies.delete("user-role");
 

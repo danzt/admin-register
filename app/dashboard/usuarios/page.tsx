@@ -319,7 +319,7 @@ export default function UsuariosPage() {
                                   <Button variant="ghost" className="h-8 w-8 p-0">
                                     <span className="sr-only">Abrir menú</span>
                                     <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
+                                    </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={() => handleEditUser(user)}>

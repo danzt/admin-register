@@ -53,8 +53,12 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
         throw new Error("Error al cargar el usuario");
       }
       const data = await response.json();
-      setUser(data.user);
-      setFormData(data.user);
+      const userData = {
+        ...data.user,
+        fecha_bautizo: data.user.fecha_bautizo ? data.user.fecha_bautizo.split("T")[0] : "",
+      };
+      setUser(userData);
+      setFormData(userData);
     } catch (error) {
       console.error("Error al cargar usuario:", error);
       toast({

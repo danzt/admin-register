@@ -22,7 +22,8 @@ type UserFormData = {
   correo: string;
   fecha_bautizo: string;
   whatsapp: boolean;
-  // password: string;
+  bautizado: boolean;
+  password: string;
 };
 
 export default function NewUserPage() {
@@ -39,7 +40,8 @@ export default function NewUserPage() {
     correo: "",
     fecha_bautizo: "",
     whatsapp: false,
-    // password: "",
+    bautizado: false,
+    password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,12 +55,16 @@ export default function NewUserPage() {
 
     try {
       if (!formData) return;
+      const dataToSend = {
+        ...formData,
+        fecha_bautizo: formData.bautizado ? formData.fecha_bautizo : "",
+      };
       const response = await fetch("/api/admin/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -183,19 +189,7 @@ export default function NewUserPage() {
                   required
                 />
               </div>
-
               <div>
-                <Label htmlFor="fecha_bautizo">Fecha de Bautizo</Label>
-                <Input
-                  id="fecha_bautizo"
-                  name="fecha_bautizo"
-                  type="date"
-                  value={formData?.fecha_bautizo || ""}
-                  onChange={handleChange}
-                />
-              </div>
-
-              {/* <div>
                 <Label htmlFor="password">Contraseña</Label>
                 <Input
                   id="password"
@@ -205,7 +199,33 @@ export default function NewUserPage() {
                   onChange={handleChange}
                   required
                 />
-              </div> */}
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="bautizado"
+                  checked={formData?.bautizado || false}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => (prev ? { ...prev, bautizado: checked, fecha_bautizo: checked ? prev.fecha_bautizo : "" } : null))
+                  }
+                />
+                <Label htmlFor="bautizado">¿Bautizado?</Label>
+              </div>
+
+              {formData?.bautizado && (
+                <div>
+                  <Label htmlFor="fecha_bautizo">Fecha de Bautizo</Label>
+                  <Input
+                    id="fecha_bautizo"
+                    name="fecha_bautizo"
+                    type="date"
+                    value={formData?.fecha_bautizo || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+              )}
+
+              
 
               <div className="flex items-center space-x-2">
                 <Switch

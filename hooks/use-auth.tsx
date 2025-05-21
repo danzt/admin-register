@@ -194,6 +194,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
+  // Guardar usuario en localStorage cada vez que cambie
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (user) {
+        localStorage.setItem("authUser", JSON.stringify(user));
+      } else {
+        localStorage.removeItem("authUser");
+      }
+    }
+  }, [user]);
+
   const login = async (
     email: string,
     password: string,

@@ -16,6 +16,7 @@ const userSchema = z.object({
     .optional(),
   fecha_bautizo: z.string().nullable().optional(),
   whatsapp: z.boolean().default(false),
+  bautizado: z.boolean().default(false),
 });
 
 export async function GET() {
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
           correo: userData.correo || null,
           fecha_bautizo: userData.fecha_bautizo || null,
           whatsapp: userData.whatsapp,
+          bautizado: userData.bautizado,
           password_hash: hashedPassword,
         },
       ])

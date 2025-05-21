@@ -57,7 +57,8 @@ export default function NewUserPage() {
       if (!formData) return;
       const dataToSend = {
         ...formData,
-        fecha_bautizo: formData.bautizado ? formData.fecha_bautizo : "",
+        fecha_bautizo: formData.bautizado && formData.fecha_bautizo ? formData.fecha_bautizo : null,
+        bautizado: formData.bautizado,
       };
       const response = await fetch("/api/admin/users", {
         method: "POST",
@@ -235,7 +236,7 @@ export default function NewUserPage() {
                     setFormData((prev) => (prev ? { ...prev, whatsapp: checked } : null))
                   }
                 />
-                <Label htmlFor="whatsapp">¿Tiene WhatsApp?</Label>
+                <Label htmlFor="whatsapp">¿Pertenece al grupo de WhatsApp?</Label>
               </div>
             </div>
 

@@ -191,7 +191,7 @@ export default function RegisterPage() {
                 checked={whatsappValue}
                 onCheckedChange={(checked) => setValue("whatsapp", checked)}
               />
-              <Label htmlFor="whatsapp">¿Tiene WhatsApp?</Label>
+              <Label htmlFor="whatsapp">¿Pertenece al grupo de WhatsApp?</Label>
             </div>
 
             <div>

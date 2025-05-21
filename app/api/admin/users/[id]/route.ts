@@ -15,6 +15,7 @@ const userUpdateSchema = z.object({
     .optional(),
   fecha_bautizo: z.string().nullable().optional(),
   whatsapp: z.boolean().default(false),
+  bautizado: z.boolean().default(false),
 });
 
 export async function PUT(
@@ -116,6 +117,7 @@ export async function PUT(
         correo: userData.correo,
         fecha_bautizo: userData.fecha_bautizo,
         whatsapp: userData.whatsapp,
+        bautizado: userData.bautizado,
       })
       .eq("id", id)
       .select()

@@ -22,6 +22,7 @@ type User = {
   correo: string | null;
   fecha_bautizo: string | null;
   whatsapp: boolean;
+  bautizado: boolean;
 };
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
@@ -56,6 +57,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       const userData = {
         ...data.user,
         fecha_bautizo: data.user.fecha_bautizo ? data.user.fecha_bautizo.split("T")[0] : "",
+        bautizado: !!data.user.bautizado,
       };
       setUser(userData);
       setFormData(userData);
@@ -77,12 +79,17 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
 
     setIsSaving(true);
     try {
+      const dataToSend = {
+        ...formData,
+        fecha_bautizo: formData.bautizado && formData.fecha_bautizo ? formData.fecha_bautizo : null,
+        bautizado: formData.bautizado,
+      };
       const response = await fetch(`/api/admin/users/${params.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -213,16 +220,29 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="fecha_bautizo">Fecha de Bautizo</Label>
-                <Input
-                  id="fecha_bautizo"
-                  name="fecha_bautizo"
-                  type="date"
-                  value={formData.fecha_bautizo || ""}
-                  onChange={handleChange}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="bautizado"
+                  checked={formData.bautizado || false}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => (prev ? { ...prev, bautizado: checked, fecha_bautizo: checked ? prev.fecha_bautizo : "" } : null))
+                  }
                 />
+                <Label htmlFor="bautizado">¿Bautizado?</Label>
               </div>
+
+              {formData.bautizado && (
+                <div>
+                  <Label htmlFor="fecha_bautizo">Fecha de Bautizo</Label>
+                  <Input
+                    id="fecha_bautizo"
+                    name="fecha_bautizo"
+                    type="date"
+                    value={formData.fecha_bautizo || ""}
+                    onChange={handleChange}
+                  />
+                </div>
+              )}
 
               <div className="flex items-center space-x-2">
                 <Switch
@@ -234,7 +254,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                     )
                   }
                 />
-                <Label htmlFor="whatsapp">¿Tiene WhatsApp?</Label>
+                <Label htmlFor="whatsapp">¿Pertenece al grupo de WhatsApp?</Label>
               </div>
             </div>
 

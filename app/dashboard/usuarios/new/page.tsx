@@ -57,7 +57,10 @@ export default function NewUserPage() {
       if (!formData) return;
       const dataToSend = {
         ...formData,
-        fecha_bautizo: formData.bautizado && formData.fecha_bautizo ? formData.fecha_bautizo : null,
+        fecha_bautizo:
+          formData.bautizado && formData.fecha_bautizo
+            ? formData.fecha_bautizo
+            : null,
         bautizado: formData.bautizado,
       };
       const response = await fetch("/api/admin/users", {
@@ -190,24 +193,32 @@ export default function NewUserPage() {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData?.password || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+              {/* <div> */}
+              {/*   <Label htmlFor="password">Contraseña</Label> */}
+              {/*   <Input */}
+              {/*     id="password" */}
+              {/*     name="password" */}
+              {/*     type="password" */}
+              {/*     value={formData?.password || ""} */}
+              {/*     onChange={handleChange} */}
+              {/*     required */}
+              {/*   /> */}
+              {/* </div> */}
 
               <div className="flex items-center space-x-2">
                 <Switch
                   id="bautizado"
                   checked={formData?.bautizado || false}
                   onCheckedChange={(checked) =>
-                    setFormData((prev) => (prev ? { ...prev, bautizado: checked, fecha_bautizo: checked ? prev.fecha_bautizo : "" } : null))
+                    setFormData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            bautizado: checked,
+                            fecha_bautizo: checked ? prev.fecha_bautizo : "",
+                          }
+                        : null,
+                    )
                   }
                 />
                 <Label htmlFor="bautizado">¿Bautizado?</Label>
@@ -226,17 +237,19 @@ export default function NewUserPage() {
                 </div>
               )}
 
-              
-
               <div className="flex items-center space-x-2">
                 <Switch
                   id="whatsapp"
                   checked={formData?.whatsapp || false}
                   onCheckedChange={(checked) =>
-                    setFormData((prev) => (prev ? { ...prev, whatsapp: checked } : null))
+                    setFormData((prev) =>
+                      prev ? { ...prev, whatsapp: checked } : null,
+                    )
                   }
                 />
-                <Label htmlFor="whatsapp">¿Pertenece al grupo de WhatsApp?</Label>
+                <Label htmlFor="whatsapp">
+                  ¿Pertenece al grupo de WhatsApp?
+                </Label>
               </div>
             </div>
 
@@ -264,4 +277,4 @@ export default function NewUserPage() {
       </Card>
     </PageContainer>
   );
-} 
+}

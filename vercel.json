@@ -1,0 +1,14 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".output",
+  "installCommand": "pnpm install",
+  "framework": "nuxtjs",
+  "functions": {
+    ".output/server/index.mjs": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NODE_VERSION": "20"
+  }
+}

@@ -46,5 +46,16 @@ export default defineNuxtConfig({
   },
   nitro: {
     compressPublicAssets: true,
+    esbuild: {
+      options: {
+        target: 'esnext',
+      },
+    },
+  },
+  // Configuración para Vercel
+  ssr: true,
+  // Configuración de build para Vercel
+  build: {
+    transpile: ['vue'],
   },
 })

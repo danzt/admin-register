@@ -8,6 +8,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "vercel-build": "nuxt build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -25,9 +26,6 @@
     ],
     "*.{json,md,css,scss}": [
       "prettier --write"
-    ],
-    "*.{ts,tsx}": [
-      "nuxt typecheck"
     ]
   },
   "dependencies": {

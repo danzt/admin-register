@@ -48,7 +48,7 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     esbuild: {
       options: {
-        target: 'esnext',
+        target: 'es2022',
       },
     },
   },

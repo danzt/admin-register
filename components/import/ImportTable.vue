@@ -53,11 +53,15 @@ watch(
   { deep: true }
 )
 
-if (!props.data || props.data.length === 0) return null
+// Computed para verificar si hay datos
+const hasData = computed(() => props.data && props.data.length > 0)
 </script>
 
 <template>
-  <div class="flex h-full flex-col rounded-md border">
+  <div v-if="!hasData" class="flex h-full items-center justify-center rounded-md border p-8">
+    <p class="text-gray-500">No hay datos para mostrar</p>
+  </div>
+  <div v-else class="flex h-full flex-col rounded-md border">
     <div class="flex-grow overflow-x-auto">
       <Table class="w-full">
         <thead>

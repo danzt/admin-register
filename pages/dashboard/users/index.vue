@@ -6,16 +6,17 @@ import DropdownMenu from '@/components/ui/DropdownMenu.vue'
 import Input from '@/components/ui/Input.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import STable from '@/components/ui/STable.vue'
+import { columnsUserTable } from '@/utils/STableUser'
 import { useUsers } from '@/composables/useSupabase'
 import { EyeIcon, MoreHorizontal, PencilIcon, TrashIcon } from 'lucide-vue-next'
 import {
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogRoot,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogRoot,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from 'radix-vue'
 import { toast } from 'vue-sonner'
 
@@ -200,7 +201,6 @@ const exportSelectedPDF = () => {
   w.print()
 }
 
-// Tabla dinámica (columnas y selección)
 const selectedArray = computed<string[]>({
   get() {
     return Array.from(selectedIds)
@@ -210,47 +210,6 @@ const selectedArray = computed<string[]>({
     for (const id of newVal) selectedIds.add(id)
   },
 })
-
-const columns = computed(() => [
-  {
-    key: 'avatar',
-    label: 'Avatar',
-    visible: true,
-    thClass: 'w-14',
-    tdClass: '',
-  },
-  {
-    key: 'idNumber',
-    label: 'Cédula',
-    sortable: true,
-    visible: true,
-    thClass: 'min-w-40',
-  },
-  { key: 'firstNames', label: 'Nombres', sortable: true, visible: true },
-  { key: 'lastNames', label: 'Apellidos', sortable: true, visible: true },
-  { key: 'email', label: 'Correo', sortable: true, visible: true },
-  {
-    key: 'phone',
-    label: 'Teléfono',
-    visible: visible.phone,
-    thClass: 'hidden md:table-cell',
-    tdClass: 'hidden md:table-cell',
-  },
-  {
-    key: 'baptismDate',
-    label: 'Bautizo',
-    visible: visible.baptism,
-    thClass: 'hidden lg:table-cell',
-    tdClass: 'hidden lg:table-cell',
-  },
-  {
-    key: 'whatsapp',
-    label: 'WhatsApp',
-    visible: visible.whatsapp,
-    thClass: 'hidden lg:table-cell',
-    tdClass: 'hidden lg:table-cell',
-  },
-])
 
 // Adapt sort event from STable (string) to our typed toggleSort
 const onSTableSort = (key: string) => toggleSort(key as any)
@@ -447,7 +406,7 @@ onMounted(() => {
           <ClientOnly>
             <STable
               :rows="paged"
-              :columns="columns"
+              :columns="columnsUserTable"
               :enable-selection="true"
               v-model:selectedKeys="selectedArray"
               :density="density"
@@ -458,28 +417,28 @@ onMounted(() => {
                 <div
                   class="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-800"
                 >
-                  {{ initials(row.firstNames, row.lastNames) }}
+                  {{ initials(row.nombres, row.apellidos) }}
                 </div>
               </template>
 
-              <template #cell-idNumber="{ row }">
+              <template #cell-cedula="{ row }">
                 <NuxtLink
                   class="text-brand-700 hover:text-brand-900"
                   :to="`/dashboard/users/${row.id}`"
-                  >{{ row.idNumber }}</NuxtLink
+                  >{{ row.cedula }}</NuxtLink
                 >
               </template>
 
-              <template #cell-email="{ row }">
-                <span v-if="row.email">{{ row.email }}</span>
+              <template #cell-correo="{ row }">
+                <span v-if="row.correo">{{ row.correo }}</span>
                 <span v-else class="text-gray-400">Sin correo</span>
               </template>
 
-              <template #cell-baptismDate="{ row }">
+              <template #cell-fecha_bautizo="{ row }">
                 <span
-                  v-if="row.baptismDate"
+                  v-if="row.fecha_bautizo"
                   class="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800 ring-1 ring-brand-200"
-                  >{{ formatDate(row.baptismDate) }}</span
+                  >{{ formatDate(row.fecha_bautizo) }}</span
                 >
                 <span
                   v-else

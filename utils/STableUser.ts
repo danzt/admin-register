@@ -1,0 +1,40 @@
+export const columnsUserTable = [
+  {
+    key: 'avatar',
+    label: 'Avatar',
+    visible: true,
+    thClass: 'w-14',
+    tdClass: '',
+  },
+  {
+    key: 'cedula',
+    label: 'Cédula',
+    sortable: true,
+    visible: true,
+    thClass: 'min-w-40',
+  },
+  { key: 'nombres', label: 'Nombres', sortable: true, visible: true },
+  { key: 'apellidos', label: 'Apellidos', sortable: true, visible: true },
+  { key: 'correo', label: 'Correo', sortable: true, visible: true },
+  {
+    key: 'telefono',
+    label: 'Teléfono',
+    visible: true,
+    thClass: 'hidden md:table-cell',
+    tdClass: 'hidden md:table-cell',
+  },
+  {
+    key: 'fecha_bautizo',
+    label: 'Bautizo',
+    visible: true,
+    thClass: 'hidden lg:table-cell',
+    tdClass: 'hidden lg:table-cell',
+  },
+  {
+    key: 'whatsapp',
+    label: 'WhatsApp',
+    visible: true,
+    thClass: 'hidden lg:table-cell',
+    tdClass: 'hidden lg:table-cell',
+  },
+]

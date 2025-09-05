@@ -172,11 +172,11 @@ export const useDashboardStats = () => {
   const getBaptismStatus = async () => {
     const { data: users, error } = await supabase
       .from('users')
-      .select('baptized')
+      .select('bautizado')
 
     if (error) throw error
 
-    const baptized = users.filter(u => !!(u as any).baptized).length
+    const baptized = users.filter(u => !!(u as any).bautizado).length
     const notBaptized = users.length - baptized
 
     return [

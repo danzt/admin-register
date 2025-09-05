@@ -16,30 +16,30 @@ const emit = defineEmits<{ (e: 'submit', values: UserFormInput): void }>()
 const form = useForm<UserFormInput>({
   validationSchema: toTypedSchema(userFormSchema),
   initialValues: {
-    idNumber: '',
-    firstNames: '',
-    lastNames: '',
-    phone: '',
-    address: '',
-    email: '',
-    baptismDate: '',
+    cedula: '',
+    nombres: '',
+    apellidos: '',
+    telefono: '',
+    direccion: '',
+    correo: '',
+    fecha_bautizo: '',
     whatsapp: false,
-    baptized: false,
+    bautizado: false,
     ...(props.initial || {}),
   },
 })
 
 const { defineField, errors, handleSubmit } = form
 
-const [idNumber, idNumberAttrs] = defineField('idNumber')
-const [firstNames, firstNamesAttrs] = defineField('firstNames')
-const [lastNames, lastNamesAttrs] = defineField('lastNames')
-const [phone, phoneAttrs] = defineField('phone')
-const [address, addressAttrs] = defineField('address')
-const [email, emailAttrs] = defineField('email')
-const [baptismDate, baptismDateAttrs] = defineField('baptismDate')
+const [idNumber, idNumberAttrs] = defineField('cedula')
+const [firstNames, firstNamesAttrs] = defineField('nombres')
+const [lastNames, lastNamesAttrs] = defineField('apellidos')
+const [phone, phoneAttrs] = defineField('telefono')
+const [address, addressAttrs] = defineField('direccion')
+const [email, emailAttrs] = defineField('correo')
+const [baptismDate, baptismDateAttrs] = defineField('fecha_bautizo')
 const [whatsapp, whatsappAttrs] = defineField('whatsapp')
-const [baptized, baptizedAttrs] = defineField('baptized')
+const [baptized, baptizedAttrs] = defineField('bautizado')
 
 const onSubmit = handleSubmit(values => emit('submit', values))
 
@@ -56,18 +56,22 @@ watch(baptized, val => {
     <div class="grid gap-1">
       <Label>Cédula</Label>
       <Input name="idNumber" v-model="idNumber" v-bind="idNumberAttrs" />
-      <span class="text-xs text-red-600">{{ errors.idNumber }}</span>
+      <span class="text-xs text-red-600">{{ errors.cedula }}</span>
     </div>
     <div class="grid gap-1 md:grid-cols-2">
       <div>
         <Label>Nombres</Label>
-        <Input name="firstNames" v-model="firstNames" v-bind="firstNamesAttrs" />
-        <span class="text-xs text-red-600">{{ errors.firstNames }}</span>
+        <Input
+          name="firstNames"
+          v-model="firstNames"
+          v-bind="firstNamesAttrs"
+        />
+        <span class="text-xs text-red-600">{{ errors.nombres }}</span>
       </div>
       <div>
         <Label>Apellidos</Label>
         <Input name="lastNames" v-model="lastNames" v-bind="lastNamesAttrs" />
-        <span class="text-xs text-red-600">{{ errors.lastNames }}</span>
+        <span class="text-xs text-red-600">{{ errors.apellidos }}</span>
       </div>
     </div>
     <div class="grid gap-1 md:grid-cols-2">
@@ -83,13 +87,8 @@ watch(baptized, val => {
     <div class="grid items-end gap-1 md:grid-cols-2">
       <div>
         <Label>Correo</Label>
-        <Input
-          name="email"
-          v-model="email"
-          v-bind="emailAttrs"
-          type="email"
-        />
-        <span class="text-xs text-red-600">{{ errors.email }}</span>
+        <Input name="email" v-model="email" v-bind="emailAttrs" type="email" />
+        <span class="text-xs text-red-600">{{ errors.correo }}</span>
       </div>
       <div v-if="baptized">
         <Label>Fecha de Bautizo</Label>

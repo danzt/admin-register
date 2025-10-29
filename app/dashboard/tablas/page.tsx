@@ -27,9 +27,7 @@ export default function TablasPage() {
 
   // Proteger la ruta
   useEffect(() => {
-    console.log("TablasPage: Estado de autenticación:", { loading, user });
     if (!loading && !user) {
-      console.log("TablasPage: Usuario no autenticado, redirigiendo a login");
       router.push("/auth/login");
     }
   }, [loading, user, router]);

@@ -56,56 +56,13 @@ export async function register(data: z.infer<typeof registerSchema>) {
     });
 
     if (authError) {
+      console.error("=== AUTH ERROR ===");
       console.error("Error de autenticación:", authError);
-
-      // Verificar si es un error de usuario ya existente
-      if (
-        authError.status === 422 &&
-        authError.code === "user_already_exists"
-      ) {
-        // El usuario existe en Auth pero no en la tabla users, intentamos insertar solo en la tabla
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .insert([
-            {
-              cedula: data.cedula,
-              nombres: data.nombres,
-              apellidos: data.apellidos,
-              telefono: data.telefono,
-              direccion: data.direccion,
-              correo: data.correo,
-              fecha_bautizo: data.fechaBautizo || null,
-              whatsapp: data.whatsapp,
-              password_hash: hashedPassword,
-            },
-          ])
-          .select("id, correo");
-
-        console.log("userData", userData);
-        console.log("userError", userError);
-
-        if (userError && (userError.message || userError.code)) {
-          console.error("Error al registrar usuario existente:", userError);
-          if (userError.code === "23505") {
-            if (userError.message.includes("users_cedula_key")) {
-              return { error: "Esta cédula ya está registrada en el sistema" };
-            }
-            if (userError.message.includes("users_correo_key")) {
-              return {
-                error:
-                  "Este correo electrónico ya está registrado en el sistema",
-              };
-            }
-          }
-          return { error: "Error al registrar el usuario" };
-        }
-
-        // Si llegamos aquí, significa que añadimos correctamente el usuario a la tabla users
-        return {
-          success: true,
-          user: userData?.[0] || { id: "auth-only", correo: data.correo },
-        };
-      }
+      console.error("Error details:", {
+        message: authError.message,
+        status: authError.status,
+        code: authError.code
+      });
 
       if (authError.message && authError.message.includes("email")) {
         return { error: "El correo electrónico ya está registrado" };
@@ -113,41 +70,76 @@ export async function register(data: z.infer<typeof registerSchema>) {
       return { error: "Error en la autenticación" };
     }
 
-    // Insertar datos del usuario en la tabla users
+    // El trigger de Supabase Auth ya insertó el usuario en la tabla users
+    // Solo necesitamos obtenerlo y actualizar los campos adicionales
+    await new Promise(resolve => setTimeout(resolve, 500)); // Esperar un momento para que el trigger se complete
+
+    // Obtener el usuario recién creado
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .insert([
-        {
+      .select("*")
+      .eq("correo", data.correo)
+      .single();
+
+    if (userError) {
+      console.error("Error al obtener usuario después de registro:", userError);
+      // Si no existe, intentar crearlo manualmente
+      const { data: newUserData, error: insertError } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: authData.user?.id,
+            cedula: data.cedula,
+            nombres: data.nombres,
+            apellidos: data.apellidos,
+            telefono: data.telefono,
+            direccion: data.direccion,
+            correo: data.correo,
+            fecha_bautizo: data.fechaBautizo || null,
+            whatsapp: data.whatsapp || false,
+            password_hash: hashedPassword,
+          },
+        ])
+        .select("*");
+
+      if (insertError) {
+        console.error("Error al insertar usuario manualmente:", insertError);
+        return { error: "Error al crear el usuario en la base de datos" };
+      }
+
+      return { success: true, user: newUserData?.[0] || authData.user };
+    }
+
+    // Actualizar los campos adicionales del usuario si el trigger lo creó con valores por defecto
+    if (userData && (userData.nombres === 'Sin nombre' || userData.telefono === 'Sin teléfono')) {
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
           cedula: data.cedula,
           nombres: data.nombres,
           apellidos: data.apellidos,
           telefono: data.telefono,
           direccion: data.direccion,
-          correo: data.correo,
           fecha_bautizo: data.fechaBautizo || null,
-          whatsapp: data.whatsapp,
-          password_hash: hashedPassword,
-        },
-      ])
-      .select("id, correo");
+          whatsapp: data.whatsapp || false,
+        })
+        .eq("id", authData.user?.id);
 
-    // Solo considerar el error si realmente hay un mensaje o código de error
-    if (userError && (userError.message || userError.code)) {
-      console.error("Error al registrar usuario:", userError);
-      if (userError.code === "23505") {
-        if (userError.message.includes("users_cedula_key")) {
-          return { error: "Esta cédula ya está registrada en el sistema" };
-        }
-        if (userError.message.includes("users_correo_key")) {
-          return {
-            error: "Este correo electrónico ya está registrado en el sistema",
-          };
-        }
+      if (updateError) {
+        console.error("Error al actualizar usuario:", updateError);
       }
-      return { error: "Error al registrar el usuario" };
+
+      // Obtener el usuario actualizado
+      const { data: updatedUser } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", authData.user?.id)
+        .single();
+
+      return { success: true, user: updatedUser || userData };
     }
 
-    return { success: true, user: userData?.[0] || authData.user };
+    return { success: true, user: userData || authData.user };
   } catch (error: any) {
     console.error("Registration error:", error);
     return { error: "Ocurrió un error durante el registro" };
@@ -189,7 +181,8 @@ export async function login({ email, password }: z.infer<typeof loginSchema>) {
         // Intentar crear el registro del usuario en la tabla users
         const { error: insertError } = await supabase.from("users").insert([
           {
-            cedula: data.user?.user_metadata?.cedula || "Sin cédula",
+            id: data.user?.id, // Usar el ID de Auth
+            cedula: data.user?.user_metadata?.cedula || "SIN_CEDULA_" + data.user?.id.substring(0, 8),
             nombres:
               data.user?.user_metadata?.nombres ||
               data.user?.email?.split("@")[0] ||
@@ -200,15 +193,33 @@ export async function login({ email, password }: z.infer<typeof loginSchema>) {
             correo: email,
             whatsapp: false,
             password_hash: "cuenta migrada",
+            role: 'usuario',
           },
         ]);
 
         if (insertError) {
           console.error("Error al crear el registro de usuario:", insertError);
+          // Si es error de duplicado, intentar obtener el usuario existente
+          if (insertError.code === "23505") {
+            const { data: existingUser } = await supabase
+              .from("users")
+              .select("*")
+              .eq("correo", email)
+              .single();
+            
+            if (existingUser) {
+              return {
+                success: true,
+                user: {
+                  ...existingUser,
+                  session: data.session,
+                },
+              };
+            }
+          }
           return { error: "No se pudo recuperar la información del usuario" };
         }
 
-        console.log("data", data);
         // Retornar datos básicos del usuario de Auth
         return {
           success: true,
@@ -231,9 +242,6 @@ export async function login({ email, password }: z.infer<typeof loginSchema>) {
 
       return { error: "No se pudo recuperar la información del usuario" };
     }
-
-    console.log("userData", userData);
-    console.log("data", data);
 
     return {
       success: true,

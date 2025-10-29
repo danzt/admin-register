@@ -27,14 +27,18 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      throw error;
+      console.error("Error al obtener usuarios:", error);
+      return NextResponse.json(
+        { error: "Error al obtener usuarios", details: error.message, code: error.code },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ users });
-  } catch (error) {
+    return NextResponse.json({ users: users || [] });
+  } catch (error: any) {
     console.error("Error al obtener usuarios:", error);
     return NextResponse.json(
-      { error: "Error al obtener usuarios" },
+      { error: "Error al obtener usuarios", details: error.message },
       { status: 500 }
     );
   }

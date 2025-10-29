@@ -61,13 +61,9 @@ export default function UserImportDropzone({
           String(header).toUpperCase().trim()
         );
 
-        console.log("headers", headers);
-
         const missingHeaders = expectedHeaders.filter(
           (header) => !headers?.includes(header)
         );
-
-        console.log("missingHeaders", missingHeaders);
         if (missingHeaders.length > 0) {
           setError(
             `Faltan columnas en el archivo: ${missingHeaders.join(", ")}`

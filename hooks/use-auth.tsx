@@ -154,10 +154,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         whatsapp: false,
         role: 'usuario',
       });
+      setLoading(false);
     } catch (error) {
       console.error("Error verificando sesión:", error);
       setUser(null);
-    } finally {
       setLoading(false);
     }
   };

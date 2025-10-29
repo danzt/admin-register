@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
@@ -10,30 +11,31 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Crear un cliente de Supabase con mejor persistencia
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    storageKey: "supabase-auth", // Clave para almacenamiento
-    storage: {
-      getItem: (key) => {
-        if (typeof window !== "undefined") {
+// Si estamos en el servidor y hay service key, usarla para evitar problemas de RLS
+const isServer = typeof window === "undefined";
+const shouldUseServiceKey = isServer && supabaseServiceKey;
+
+export const supabase = createClient(
+  supabaseUrl, 
+  shouldUseServiceKey ? supabaseServiceKey : supabaseAnonKey, 
+  {
+    auth: {
+      persistSession: !isServer,
+      storageKey: "supabase-auth",
+      storage: !isServer ? {
+        getItem: (key: string) => {
           return localStorage.getItem(key);
-        }
-        return null;
-      },
-      setItem: (key, value) => {
-        if (typeof window !== "undefined") {
+        },
+        setItem: (key: string, value: string) => {
           localStorage.setItem(key, value);
-        }
-      },
-      removeItem: (key) => {
-        if (typeof window !== "undefined") {
+        },
+        removeItem: (key: string) => {
           localStorage.removeItem(key);
-        }
-      },
+        },
+      } : undefined,
     },
-  },
-});
+  }
+);
 
 // Función para crear un cliente con autenticación personalizada
 export const createSupabaseClient = (accessToken: string) => {

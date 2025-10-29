@@ -61,10 +61,10 @@ const DashboardPage = () => {
           fetch("/api/admin/stats/baptism-status"),
         ]);
 
-        if (!summaryRes.ok || !usersByMonthRes.ok || !baptismStatusRes.ok) {
-          console.error("Error fetching dashboard data");
-          throw new Error("Failed to load dashboard data");
-        }
+        // if (!summaryRes.ok || !usersByMonthRes.ok || !baptismStatusRes.ok) {
+        //   console.error("Error fetching dashboard data");
+        //   throw new Error("Failed to load dashboard data");
+        // }
 
         const summaryData = await summaryRes.json();
         const usersByMonthData = await usersByMonthRes.json();

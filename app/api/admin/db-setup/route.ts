@@ -42,7 +42,6 @@ export async function GET(request: Request) {
     // 3. Si la columna no existe, intentamos actualizarla de todos modos
     // Esto generará un error, pero nos permite detectar el problema
     if (!hasRoleColumn) {
-      console.log('La columna role no existe. Intentando actualizar para verificar errores...');
       
       const { error: updateError } = await supabase
         .from('users')

@@ -47,6 +47,7 @@ export default function RegisterPage() {
         setErrorMessage(result.error);
       }
     } catch (error) {
+      console.error("Error in onSubmit:", error);
       setErrorMessage("Ocurrió un error durante el registro");
     }
   }
@@ -194,20 +195,23 @@ export default function RegisterPage() {
               <Label htmlFor="whatsapp">¿Pertenece al grupo de WhatsApp?</Label>
             </div>
 
-            {/* <div> */}
-            {/*   <Label htmlFor="password">Contraseña</Label> */}
-            {/*   <Input */}
-            {/*     id="password" */}
-            {/*     type="password" */}
-            {/*     {...register("password")} */}
-            {/*     className={errors.password ? "border-red-500" : ""} */}
-            {/*   /> */}
-            {/*   {errors.password && ( */}
-            {/*     <p className="mt-1 text-sm text-red-500"> */}
-            {/*       {errors.password.message as string} */}
-            {/*     </p> */}
-            {/*   )} */}
-            {/* </div> */}
+            <div>
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                {...register("password")}
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.password.message as string}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Mínimo 8 caracteres
+              </p>
+            </div>
           </div>
 
           {errorMessage && (

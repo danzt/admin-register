@@ -90,10 +90,10 @@ export default function UsuariosPage() {
   }, [loading, user, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       fetchUsers();
     }
-  }, [user]);
+  }, [user, loading]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -116,15 +116,34 @@ export default function UsuariosPage() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/admin/users");
+      const response = await fetch("/api/admin/users", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Asegurar que no se use cache
+        cache: "no-cache",
+      });
+      
       if (!response.ok) {
-        throw new Error("Error al cargar los usuarios");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al cargar los usuarios");
       }
+      
       const data = await response.json();
-      setUsers(data.users);
-      setFilteredUsers(data.users);
+      console.log("=== USUARIOS DATA ===", data);
+      
+      if (data.users && Array.isArray(data.users)) {
+        setUsers(data.users);
+        setFilteredUsers(data.users);
+      } else {
+        setUsers([]);
+        setFilteredUsers([]);
+      }
     } catch (error) {
-      console.error("Error al cargar usuarios:", error);
+      // En caso de error, limpiar los datos
+      setUsers([]);
+      setFilteredUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -155,8 +174,6 @@ export default function UsuariosPage() {
       
       fetchUsers();
     } catch (error) {
-      console.error("Error al eliminar usuario:", error);
-      
       toast({
         title: "Error",
         description: (error as Error).message || "Ocurrió un error al eliminar el usuario.",

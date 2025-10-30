@@ -67,3 +67,4 @@ pnpm dev
 - [Zod](https://github.com/colinhacks/zod) - Validación de datos
 - [Tailwind CSS](https://tailwindcss.com/) - Estilos
 - [shadcn/ui](https://ui.shadcn.com/) - Componentes de UI
+# Production deployment configured
